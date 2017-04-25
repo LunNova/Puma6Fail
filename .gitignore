@@ -1,0 +1,6 @@
+# rust compiled
+target
+
+# idea project files
+*.iml
+.idea/
