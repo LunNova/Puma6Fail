@@ -2,6 +2,8 @@
 
 Tool to demonstrate issue from this post found by mackey: https://www.dslreports.com/forum/r31377755-
 
+Proof of concept code is [already public](https://www.theregister.co.uk/2017/04/27/intel_puma6_chipset_trivial_to_dos/) elsewhere.
+
 DoS occurs in either direction - UDP from LAN to WAN or WAN to LAN.
 
 Testing through a local Virgin Media Super Hub 3 modem:

