@@ -63,13 +63,13 @@ fn main() {
 
 			count = count + 1;
 			let elapsed = start.to(time::PreciseTime::now()).num_milliseconds();
+			if run_seconds > 0 && elapsed > run_seconds as i64 * 1000i64 {
+				println!("run seconds exceeded, stopping");
+				return;
+			}
 			if count as f32 / packets_per_millisecond > (elapsed as f32) {
 				thread::sleep(Duration::from_millis(2));
 			}
-		}
-		if run_seconds > 0 && start.to(time::PreciseTime::now()).num_seconds() as i32 > run_seconds {
-			println!("run seconds exceeded, stopping");
-			return;
 		}
 	}
 }
