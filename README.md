@@ -4,6 +4,8 @@ Tool to demonstrate issue from this post found by mackey: https://www.dslreports
 
 Proof of concept code is [already public](https://www.theregister.co.uk/2017/04/27/intel_puma6_chipset_trivial_to_dos/) elsewhere.
 
+See [CVE-2017-5693](https://nvd.nist.gov/vuln/detail/CVE-2017-5693).
+
 DoS occurs in either direction - UDP from LAN to WAN or WAN to LAN.
 
 Testing through a local Virgin Media Super Hub 3 modem:
