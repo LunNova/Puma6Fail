@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Ross Allan <ross@nallar.me>"]
 
 [dependencies]
-time = "0.1.37"
+time = "0.3.20"
