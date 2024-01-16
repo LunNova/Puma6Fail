@@ -64,7 +64,7 @@ fn main() {
 		socket_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 10000));
 	}
 
-	let source = UdpSocket::bind(socket_addr).expect("couldn't bind to address");;
+	let source = UdpSocket::bind(socket_addr).expect("couldn't bind to address");
 	let data = vec![0; length as usize];
 	let per_second = (1024f32 * 1024f32 * mbper_second) / 8f32;
 	let udp_length = length + 28;
