@@ -2,6 +2,7 @@
 name = "puma6_fail"
 version = "0.1.0"
 authors = ["Lun <github@nyx.nova.fail>"]
+edition = "2021"
 
 [dependencies]
 time = "0.1.37"
